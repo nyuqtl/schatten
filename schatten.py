@@ -17,8 +17,21 @@ def printerX(x, L, N) :
 
 def schatten(M, L, p) :
     dm = np.matrix(M, copy=True)
-    for l in range(0, L) :
-        dm[l, l] = 0.
+    print dm
+    print ''
+    for l1 in range(0, L) :
+        for l2 in range(0, L) :
+            if l1 < l2 :
+                # set upper right off-diagonal imaginary values to zero
+                dm[l1, l2] = np.complex128(np.real(dm[l1, l2]))
+            if l1 == l2 :
+                # remove the diagonal
+                dm[l1, l2] = 0.
+            if l1 > l2 :
+                # set lower left off-diagonal real values to zero
+                dm[l1, l2] = np.complex128(1j*np.imag(dm[l1, l2]))
+    print dm
+    sys.exit(0)
     w, _ = np.linalg.eigh(dm)
     s = 0.
     for val in w :
