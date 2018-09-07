@@ -101,8 +101,8 @@ def prnt(v) :
 
 def process(L, N, p, max, C2b, norm) :
     w = True
-    for cnt in tqdm(range(0, max)) :
-    #for cnt in range(0, max) :
+    #for cnt in tqdm(range(0, max)) :
+    for cnt in range(0, max) :
         seed = int(time.time()) + cnt
         np.random.seed(seed=seed)
         dm = np.matrix(qp.rand_dm(L).full())
@@ -115,7 +115,18 @@ def process(L, N, p, max, C2b, norm) :
 dmhashes = []
 check_duplicates = False
 
-L = 4
+p = 1.
+max = 1000
+for L in [2, 4, 8, 16, 32, 64] :
+    for N in [2, 4, 8, 16, 32, 64] :
+        w = process(L, N, p, max, BiB, schattenSingular)
+        print '\nL = %s' % str(L)
+        print 'N = %s' % str(N)
+        print 'p = %s' % str(p)
+        print 'B + iBd : %s' % prnt(w)
+
+'''
+L = 2
 N = 2
 p = 1.
 max = 100
@@ -143,3 +154,4 @@ print '| singular |   %s    |   %s           |   %s        |' % col1
 print '| singspec |   %s    |   %s           |   %s        |' % col2
 print '| eigenval |   %s    |   %s           |   %s        |' % col3
 print '+----------+---------+----------------+-------------+\n'
+'''
