@@ -84,6 +84,16 @@ def C2bdagger(rho, x, L, N, p, schatten) :
     rhs = schatten(R, L, p, rt=2.)
     return lhs <= rhs, lhs, rhs
 
+def BiB(rho, x, L, N, p, schatten) :
+    lhs = 0.
+    for n in range(0, N) :
+        pn = PLL(x, rho, L, n)
+        pn = pn + 1j*pn.getH()
+        lhs += schatten(pn, L, p)
+    R = rho+1j*rho.getH()
+    rhs = schatten(R, L, p)
+    return lhs <= rhs, lhs, rhs
+
 def prnt(v) :
     if v :
         return str(1) + ' '
@@ -98,7 +108,6 @@ def process(L, N, p, max, C2b, norm) :
         dm = np.matrix(qp.rand_dm(L).full())
         x = instance(L, N)
         w, _, _ = C2b(dm, x, L, N, p, norm)
-        #if False in [w1, w2, w3, w4, w5, w6] :
         if not w :
             break
     return w
@@ -106,9 +115,9 @@ def process(L, N, p, max, C2b, norm) :
 dmhashes = []
 check_duplicates = False
 
-L = 2
+L = 4
 N = 2
-p = 2.
+p = 1.
 max = 100
 
 w1 = process(L, N, p, max, C2b, schattenSingular)
@@ -118,12 +127,19 @@ w4 = process(L, N, p, max, C2bdagger, schattenSingular)
 w5 = process(L, N, p, max, C2bdagger, schattenSingularSpec)
 w6 = process(L, N, p, max, C2bdagger, schattenEigen)
 
+w7 = process(L, N, p, max, BiB, schattenSingular)
+w8 = process(L, N, p, max, BiB, schattenSingularSpec)
+
 print '\nL = %s' % str(L)
 print 'N = %s' % str(N)
 print 'p = %s' % str(p)
 
-print '\n+-- norm --+-- C2b --+-- C2b dagger --+'
-print '| singular |   %s    |   %s           |' % (prnt(w1), prnt(w4))
-print '| singspec |   %s    |   %s           |' % (prnt(w2), prnt(w5))
-print '| eigenval |   %s    |   %s           |' % (prnt(w3), prnt(w6))
-print '+----------+---------+----------------+\n'
+col1 = tuple([prnt(w1), prnt(w4), prnt(w7)])
+col2 = tuple([prnt(w2), prnt(w5), prnt(w8)])
+col3 = tuple([prnt(w3), prnt(w6), '_ '])
+
+print '\n+-- norm --+-- C2b --+-- C2b dagger --+-- B + iBd --+'
+print '| singular |   %s    |   %s           |   %s        |' % col1
+print '| singspec |   %s    |   %s           |   %s        |' % col2
+print '| eigenval |   %s    |   %s           |   %s        |' % col3
+print '+----------+---------+----------------+-------------+\n'
