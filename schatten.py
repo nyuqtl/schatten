@@ -84,13 +84,26 @@ def C2bdagger(rho, x, L, N, p, schatten) :
     rhs = schatten(R, L, p, rt=2.)
     return lhs <= rhs, lhs, rhs
 
+def Bn(M, L) :
+    dm = np.zeros((L, L), dtype=np.float64)
+    for l1 in range(0, L) :
+        for l2 in range(0, L) :
+            if l1 < l2 :
+                # set upper right off-diagonal imaginary values to zero
+                dm[l1, l2] = np.real(M[l1, l2])
+            if l1 > l2 :
+                # set lower left off-diagonal real values to zero
+                dm[l1, l2] = np.imag(M[l1, l2])
+    return np.matrix(dm)
+
 def BiB(rho, x, L, N, p, schatten) :
     lhs = 0.
     for n in range(0, N) :
-        pn = PLL(x, rho, L, n)
+        pn = Bn(PLL(x, rho, L, n), L)
         pn = pn + 1j*pn.getH()
         lhs += schatten(pn, L, p)
-    R = rho+1j*rho.getH()
+    B = Bn(rho, L)
+    R = B+1j*B.getH()
     rhs = schatten(R, L, p)
     return lhs <= rhs, lhs, rhs
 
@@ -118,19 +131,22 @@ check_duplicates = False
 p = 1.
 max = 1000
 for L in [2, 4, 8, 16, 32, 64] :
-    for N in [2, 4, 8, 16, 32, 64] :
-        w = process(L, N, p, max, BiB, schattenSingular)
+    for N in [2, 4, 8, 16] :
+        w = process(L, N, p, max, BiB, schattenEigen)
         print '\nL = %s' % str(L)
         print 'N = %s' % str(N)
         print 'p = %s' % str(p)
         print 'B + iBd : %s' % prnt(w)
+        if not w :
+            print 'failaaaaa'
+            sys.exit(0)
 
-'''
-L = 2
+L = 4
 N = 2
-p = 1.
+p = 2.
 max = 100
 
+'''
 w1 = process(L, N, p, max, C2b, schattenSingular)
 w2 = process(L, N, p, max, C2b, schattenSingularSpec)
 w3 = process(L, N, p, max, C2b, schattenEigen)
