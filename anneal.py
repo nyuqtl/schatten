@@ -6,6 +6,8 @@ def testDM(rho, silent=True) :
     trace = np.trace(rho)
     t1 = np.isclose([trace], [1.])[0]
     t2 = (w >= 0.).all()
+    if not t2 :
+        print w
     t3 = (rho.H == rho).all()
     if not silent :
         print 'trace is one: %s' % str(t1)
@@ -22,30 +24,51 @@ def testKets(kets) :
             return False
     return True
 
-def dm(kets, prob, N) :
-    dm = qp.Qobj(np.zeros((N, N), np.float64))
-    for ket, p in zip(kets, prob) :
-        dm += p * (ket * ket.dag())
+def dm(kets, prob, M) :
+    dm = prob[0] * qp.ket2dm(kets[0])
+    for i in range(1, M) :
+        dm += prob[i] * qp.ket2dm(kets[i])
     return np.matrix(dm.full())
 
-#def randomChange(kets, prob) :
+def randomChange(kets, prob, N, M, a, ma, mx) :
+    # pick random ket
+    index1 = np.random.randint(M)
+    # pick random element in this ket
+    index2 = np.random.randint(N)
+    # change phase
+    kets[index1] = phase(kets[index1], index2, a)
+    if not testKets(kets) :
+        raise Exception('phase made wrong ket')
+    # change amplitude
+    kets[index1] = amplitude(kets[index1], index2, ma)
+    if not testKets(kets) :
+        raise Exception('amplitude made wrong ket')
+    # change probabilities
+    ch = np.arange(M)
+    np.random.shuffle(ch)
+    prob[ch[0]], prob[ch[1]] = moveProb(prob[ch[0]], prob[ch[1]], mx)
+    return kets, prob
 
-def rotate2D(x, y, a) :
+def rotate2D(z, a) :
+    x = np.real(z)
+    y = np.imag(z)
     x1 = x*np.cos(a) - y*np.sin(a)
     y1 = y*np.cos(a) + x*np.sin(a)
-    return x1, y1
+    return x1 + 1j*y1
 
-def moveComplex(z1, z2, ma, mx) :
-    a1 = np.random.uniform(low=0.0, high=ma, size=(1,))[0]
-    a2 = np.random.uniform(low=0.0, high=ma, size=(1,))[0]
-    r = np.random.uniform(low=0.0, high=mx, size=(1,))[0]
-    x1, y1 = rotate2D(np.real(z1), np.imag(z1), a1)
-    x2, y2 = rotate2D(np.real(z2), np.imag(z2), a2)
-    m1 = np.sqrt(np.power(x1, 2.) + np.power(y1, 2.))
-    m2 = np.sqrt(np.power(x2, 2.) + np.power(y2, 2.))
-    nz1 = (x1/m1)*(m1+r) + 1j*(y1/m1)*(m1+r)
-    nz2 = (x2/m2)*(m2-r) + 1j*(y2/m2)*(m2+r)
-    return nz1, nz2
+def phase(ket, index, a) :
+    inp = ket.full()
+    inp[index] = rotate2D(inp[index], a)
+    m = np.linalg.norm(inp)
+    inp = inp / m
+    return qp.Qobj(inp)
+
+def amplitude(ket, index, coeff) :
+    inp = ket.full()
+    inp[index] = ket[index]*coeff
+    m = np.linalg.norm(inp)
+    inp = inp / m
+    return qp.Qobj(inp)
 
 def moveProb(p1, p2, mx) :
     r = np.random.uniform(low=0.0, high=mx, size=(1,))[0]
@@ -56,18 +79,49 @@ M = 5
 
 # make random ket
 kets = []
-prob = np.random.dirichlet(np.ones(N))
-
+prob = np.random.dirichlet(np.ones(M))
 for i in range(0, 5) :
     ket = qp.rand_ket(N)
     kets.append(ket)
 
-rho = dm(kets, prob, N)
 
-#testDM(rho, silent=False)
-
+print np.sum(prob)
 print testKets(kets)
+rho = dm(kets, prob, M)
+testDM(rho, silent=False)
 
+kets2, prob2 = randomChange(kets, prob, N, M, 1.01, np.pi, 0.2)
+rho2 = dm(kets2, prob2, M)
+print '---'
+print np.sum(prob2)
+print testKets(kets2)
+testDM(rho2, silent=False)
+
+
+
+
+
+'''
+ket = qp.rand_ket(2).full()
+z1 = ket[0][0]
+z2 = ket[1][0]
+print z1, z2
+print np.power(np.absolute(z1), 2.) + np.power(np.absolute(z2), 2.)
+nz1, nz2 = moveComplex(z1, z2, 0.12, 0.13)
+print nz1, nz2
+print np.power(np.absolute(nz1), 2.) + np.power(np.absolute(nz2), 2.)
+'''
+
+#randomChange(kets, prob)
+
+'''
+ket = qp.rand_ket(5)
+print ket.full()
+ket = phase(ket, 0, 1.2)
+ket = amplitude(ket, 0, 1.1)
+print ket.norm()
+print qp.Qobj(ket).full()
+'''
 
 # small random change in the ket
 #H = qp.rand_herm(N)
