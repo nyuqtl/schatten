@@ -1,6 +1,9 @@
 import numpy as np
 import qutip as qp
 
+from simanneal import Annealer
+from tools import schattenP, PLL, Bn, BiB, instanceX
+
 def testDM(rho, silent=True) :
     w, _ = np.linalg.eigh(rho)
     trace = np.trace(rho)
@@ -24,31 +27,6 @@ def testKets(kets) :
             return False
     return True
 
-def dm(kets, prob, M) :
-    dm = prob[0] * qp.ket2dm(kets[0])
-    for i in range(1, M) :
-        dm += prob[i] * qp.ket2dm(kets[i])
-    return np.matrix(dm.full())
-
-def randomChange(kets, prob, N, M, a, ma, mx) :
-    # pick random ket
-    index1 = np.random.randint(M)
-    # pick random element in this ket
-    index2 = np.random.randint(N)
-    # change phase
-    kets[index1] = phase(kets[index1], index2, a)
-    if not testKets(kets) :
-        raise Exception('phase made wrong ket')
-    # change amplitude
-    kets[index1] = amplitude(kets[index1], index2, ma)
-    if not testKets(kets) :
-        raise Exception('amplitude made wrong ket')
-    # change probabilities
-    ch = np.arange(M)
-    np.random.shuffle(ch)
-    prob[ch[0]], prob[ch[1]] = moveProb(prob[ch[0]], prob[ch[1]], mx)
-    return kets, prob
-
 def rotate2D(z, a) :
     x = np.real(z)
     y = np.imag(z)
@@ -56,77 +34,71 @@ def rotate2D(z, a) :
     y1 = y*np.cos(a) + x*np.sin(a)
     return x1 + 1j*y1
 
-def phase(ket, index, a) :
-    inp = ket.full()
-    inp[index] = rotate2D(inp[index], a)
+def phase(inp, a) :
+    inp = rotate2D(inp, a)
     m = np.linalg.norm(inp)
     inp = inp / m
-    return qp.Qobj(inp)
+    return inp
 
-def amplitude(ket, index, coeff) :
-    inp = ket.full()
-    inp[index] = ket[index]*coeff
+def amplitude(inp, coeff) :
+    inp = inp*coeff
     m = np.linalg.norm(inp)
     inp = inp / m
-    return qp.Qobj(inp)
+    return inp
 
-def moveProb(p1, p2, mx) :
-    r = np.random.uniform(low=0.0, high=mx, size=(1,))[0]
-    return p1 - r, p2 + r
+class OptimizeNorm(Annealer):
+    def __init__(self, state, L, N, a, ma):
+        self.L = L
+        self.N = N
+        self.a = a
+        self.ma = ma
+        super(OptimizeNorm, self).__init__(state)  # important!
+    def move(self):
+        """Randomly change one of kets"""
+        x, dm = self.state
+        l = np.random.randint(0, self.L)
+        n = np.random.randint(0, self.N)
+        x[l,:] = phase(x[l,:], self.a)
+        x[l,:] = amplitude(x[l,:], self.ma)
+        #dm = np.matrix(qp.rand_dm(self.L).full())
+    def energy(self):
+        """Calculates the difference between RHS and LHS of C2(b)"""
+        x, dm = self.state
+        lhs, rhs = BiB(dm, x, self.L, self.N, 1.)
+        return rhs - lhs
 
-N = 4
-M = 5
+# choose dimensions
+L = 4
+N = 7
 
-# make random ket
-kets = []
-prob = np.random.dirichlet(np.ones(M))
-for i in range(0, 5) :
-    ket = qp.rand_ket(N)
-    kets.append(ket)
+# get some random density matrix
+dm = np.matrix(qp.rand_dm(L).full())
 
+# get set of random kets that will be used for measurement
+x = instanceX(L, N)
 
-print np.sum(prob)
-print testKets(kets)
-rho = dm(kets, prob, M)
-testDM(rho, silent=False)
+print 'random sampling for density matrix\n'
+lhs, rhs = BiB(dm, x, L, N, 1.)
+mini = rhs - lhs
+for i in range(0, 10000) :
+    rho = np.matrix(qp.rand_dm(L).full())
+    lhs, rhs = BiB(rho, x, L, N, 1.)
+    nmini = rhs - lhs
+    if nmini < mini :
+        print nmini
+        mini = nmini
+        dm = rho
+        if np.isclose([mini], [0.])[0] :
+            print '\nfound tightest C2(b) bound which is approximately 0.'
+            break
 
-kets2, prob2 = randomChange(kets, prob, N, M, 1.01, np.pi, 0.2)
-rho2 = dm(kets2, prob2, M)
-print '---'
-print np.sum(prob2)
-print testKets(kets2)
-testDM(rho2, silent=False)
+print 'beginning simulated annealing to find measurement violating C2(b) as local optimum\n'
+initial_state = tuple([x, dm])
+opt = OptimizeNorm(initial_state, L, N, .5*np.pi, .5)
+opt.Tmax = 200000.0
+final_state, difference = opt.anneal()
 
+print '\n\n'
 
-
-
-
-'''
-ket = qp.rand_ket(2).full()
-z1 = ket[0][0]
-z2 = ket[1][0]
-print z1, z2
-print np.power(np.absolute(z1), 2.) + np.power(np.absolute(z2), 2.)
-nz1, nz2 = moveComplex(z1, z2, 0.12, 0.13)
-print nz1, nz2
-print np.power(np.absolute(nz1), 2.) + np.power(np.absolute(nz2), 2.)
-'''
-
-#randomChange(kets, prob)
-
-'''
-ket = qp.rand_ket(5)
-print ket.full()
-ket = phase(ket, 0, 1.2)
-ket = amplitude(ket, 0, 1.1)
-print ket.norm()
-print qp.Qobj(ket).full()
-'''
-
-# small random change in the ket
-#H = qp.rand_herm(N)
-
-# make random hermitian operator
-
-
-# small random change in the hermitian operator
+if np.isclose([difference], [0.])[0] :
+    print 'no C2(b) violation found'
