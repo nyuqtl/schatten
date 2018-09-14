@@ -120,18 +120,28 @@ def process(L, N, p, max, C2b, norm) :
         np.random.seed(seed=seed)
         dm = np.matrix(qp.rand_dm(L).full())
         x = instance(L, N)
-        w, _, _ = C2b(dm, x, L, N, p, norm)
+        w, lhs, rhs = C2b(dm, x, L, N, p, norm)
         if not w :
+            print 'fail'
+            printerX(x, L, N)
+            print 'density matrix'
+            print dm
+            print 'real matrix'
+            print Bn(dm, L)
+            print 'lhs %s' % str(lhs)
+            print 'lhs %s' % str(lhs)
+            return w
             break
     return w
 
 dmhashes = []
 check_duplicates = False
 
+
 p = 1.
 max = 1000
-for L in [2, 4, 8, 16, 32, 64] :
-    for N in [2, 4, 8, 16] :
+for L in [2, 4, 8] :
+    for N in [2, 4, 8] :
         w = process(L, N, p, max, BiB, schattenEigen)
         print '\nL = %s' % str(L)
         print 'N = %s' % str(N)
@@ -141,12 +151,12 @@ for L in [2, 4, 8, 16, 32, 64] :
             print 'failaaaaa'
             sys.exit(0)
 
+
 L = 4
 N = 2
 p = 2.
 max = 100
 
-'''
 w1 = process(L, N, p, max, C2b, schattenSingular)
 w2 = process(L, N, p, max, C2b, schattenSingularSpec)
 w3 = process(L, N, p, max, C2b, schattenEigen)
@@ -170,4 +180,3 @@ print '| singular |   %s    |   %s           |   %s        |' % col1
 print '| singspec |   %s    |   %s           |   %s        |' % col2
 print '| eigenval |   %s    |   %s           |   %s        |' % col3
 print '+----------+---------+----------------+-------------+\n'
-'''
