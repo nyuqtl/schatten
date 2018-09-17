@@ -107,6 +107,28 @@ def BiB(rho, x, L, N, p, schatten) :
     rhs = schatten(R, L, p)
     return lhs <= rhs, lhs, rhs
 
+def BiB2(rho, x, L, N, p, schatten) :
+    lhs = 0.
+    for n in range(0, N) :
+        pn = PLL(x, rho, L, n)
+        pn = pn + 1j*pn.getH()
+        pn = Bn(pn, L)
+        lhs += schatten(pn, L, p)
+    B = rho+1j*rho.getH()
+    R = Bn(B, L)
+    rhs = schatten(R, L, p)
+    return lhs <= rhs, lhs, rhs
+
+def BiB3(rho, x, L, N, p, schatten) :
+    lhs = 0.
+    for n in range(0, N) :
+        pn = PLL(x, rho, L, n)
+        pn = pn + 1j*pn.getH()
+        lhs += schatten(pn, L, p)
+    R = rho+1j*rho.getH()
+    rhs = schatten(R, L, p)
+    return lhs <= rhs, lhs, rhs
+
 def prnt(v) :
     if v :
         return str(1) + ' '
@@ -129,7 +151,8 @@ def process(L, N, p, max, C2b, norm) :
             print 'real matrix'
             print Bn(dm, L)
             print 'lhs %s' % str(lhs)
-            print 'lhs %s' % str(lhs)
+            print 'rhs %s' % str(rhs)
+            print 'numerically close %s' % str(np.isclose([lhs], [rhs])[0])
             return w
             break
     return w
@@ -137,12 +160,12 @@ def process(L, N, p, max, C2b, norm) :
 dmhashes = []
 check_duplicates = False
 
-
+'''
 p = 1.
 max = 1000
 for L in [2, 4, 8] :
     for N in [2, 4, 8] :
-        w = process(L, N, p, max, BiB, schattenEigen)
+        w = process(L, N, p, max, BiB2, schattenSingular)
         print '\nL = %s' % str(L)
         print 'N = %s' % str(N)
         print 'p = %s' % str(p)
@@ -150,12 +173,12 @@ for L in [2, 4, 8] :
         if not w :
             print 'failaaaaa'
             sys.exit(0)
-
+'''
 
 L = 4
 N = 2
-p = 2.
-max = 100
+p = 1.
+max = 1000
 
 w1 = process(L, N, p, max, C2b, schattenSingular)
 w2 = process(L, N, p, max, C2b, schattenSingularSpec)
