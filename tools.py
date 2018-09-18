@@ -1,6 +1,20 @@
 import numpy as np
 import qutip as qp
 
+def testDM(rho, silent=True) :
+    w, _ = np.linalg.eigh(rho)
+    trace = np.trace(rho)
+    t1 = np.isclose([trace], [1.])[0]
+    t2 = (w >= 0.).all()
+    if not t2 :
+        print w
+    t3 = (rho.H == rho).all()
+    if not silent :
+        print 'trace is one: %s' % str(t1)
+        print 'eigenvalues positive: %s' % str(t2)
+        print 'is Hermitian: %s' % str(t3)
+    return t1 and t2 and t3
+
 def schattenP(M, L, p, rt=1.) :
     dm = np.matrix(M, copy=True)
     for l in range(0, L) :
