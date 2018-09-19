@@ -1,5 +1,16 @@
+# Introduction
 
-# Test using random samples
+This repository contains our computational experiment for testing various instances of density matrix and measurements for violation of C2(b) coherence property. We tested different kinds of norms and this program was used as tool for checking for violations of C2(b).
+
+## Get started
+
+Install all the requirements using
+
+`pip install -r requirements.txt`
+
+From there you can perform three kinds of computational experiment. Random sampling, test using precomputed data and meta-heuristic test. Each of those has a dedicated section below.
+
+## Test using random samples
 
 Numerical test of `C2(b)` with `schatten-1` norm and `L1` norm (for debugging) on one million instances.
 
@@ -76,13 +87,13 @@ number of violating instances per test:
 
 ```
 
-# Test using pre-generated problem instances
+## Test using pre-generated problem instances
 
 At the moment of development of this computational experiment [qutip](http://qutip.org) library doesn't give control of randomness, we cannot pass our own seed as parameter thus it is harder to reproduce results. As a dirty solution we implemented a script that pre-generates problem instances and stores them in files. You can feel free to generate as many as you need, during the test instances are streamed from files avoiding wasting memory.
 
 We pre-generated some instances, look up [instances directory](https://github.com/nyuqtl/schatten/tree/master/instances).
 
-## Generating instances
+### Generating instances
 
 Generate set of random density matrices
 
@@ -92,7 +103,7 @@ Generate random measurements
 
 `python x_gen.py`
 
-## Running test on pre-generated instances
+### Running test on pre-generated instances
 
 Once set of instances is generated you can run the test script
 
@@ -100,7 +111,7 @@ Once set of instances is generated you can run the test script
 
 Output is compatible with one from random sampling
 
-# Simulated annealing
+## Simulated annealing
 
 In order to avoid relying entirely on random sampling we also implemented a meta-heuristic approach based on simulated annealing.
 
