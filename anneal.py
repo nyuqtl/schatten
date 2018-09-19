@@ -2,21 +2,9 @@ import numpy as np
 import qutip as qp
 
 from simanneal import Annealer
-from tools import schattenP, PLL, Bn, BiB, instanceX
+from tools import instanceX
 
-def testDM(rho, silent=True) :
-    w, _ = np.linalg.eigh(rho)
-    trace = np.trace(rho)
-    t1 = np.isclose([trace], [1.])[0]
-    t2 = (w >= 0.).all()
-    if not t2 :
-        print w
-    t3 = (rho.H == rho).all()
-    if not silent :
-        print 'trace is one: %s' % str(t1)
-        print 'eigenvalues positive: %s' % str(t2)
-        print 'is Hermitian: %s' % str(t3)
-    return t1 and t2 and t3
+from testing import normSchattenP, wrapperBiB, C2b
 
 def testKets(kets) :
     for ket in kets :
@@ -64,7 +52,7 @@ class OptimizeNorm(Annealer):
     def energy(self):
         """Calculates the difference between RHS and LHS of C2(b)"""
         x, dm = self.state
-        lhs, rhs = BiB(dm, x, self.L, self.N, 1.)
+        _, lhs, rhs = C2b(dm, x, self.L, self.N, 1., normSchattenP, wrapperBiB)
         return rhs - lhs
 
 # choose dimensions
@@ -78,11 +66,11 @@ dm = np.matrix(qp.rand_dm(L).full())
 x = instanceX(L, N)
 
 print 'random sampling for density matrix\n'
-lhs, rhs = BiB(dm, x, L, N, 1.)
+_, lhs, rhs = C2b(dm, x, L, N, 1., normSchattenP, wrapperBiB)
 mini = rhs - lhs
 for i in range(0, 10000) :
     rho = np.matrix(qp.rand_dm(L).full())
-    lhs, rhs = BiB(rho, x, L, N, 1.)
+    _, lhs, rhs = C2b(rho, x, L, N, 1., normSchattenP, wrapperBiB)
     nmini = rhs - lhs
     if nmini < mini :
         print nmini
