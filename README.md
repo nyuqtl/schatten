@@ -117,6 +117,8 @@ In order to avoid relying entirely on random sampling we also implemented a meta
 
 The way it works is initially it random samples for density matrix for which C2(b) is at equality, and then it uses simulated annealing to explore local neighborhood of solutions to search for violation. Simulated annealing part is based on [simanneal module](https://github.com/perrygeo/simanneal/)
 
+Reason why we decided to implement it that way was simulated annealing performed well locally, solution was improving up to 30%, however local search was not aggressive enough to lift C2(b) to equality, even with extreme initial temperatures.
+
 Run
 
 `python anneal.py`
