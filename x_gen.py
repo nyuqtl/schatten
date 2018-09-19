@@ -5,7 +5,7 @@ import numpy as np
 import qutip as qp
 
 from tqdm import tqdm
-from tools import instanceX
+from testing import instanceX
 
 m = 1000
 

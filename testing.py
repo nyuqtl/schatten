@@ -1,4 +1,12 @@
 import numpy as np
+import qutip as qp
+
+def instanceX(L, N) :
+    x = np.zeros((L, N), dtype=np.complex128)
+    # create X
+    for l in range(0, L) :
+        x[l,:] = np.matrix(qp.rand_ket(N).full()).T
+    return x
 
 def PLL(x, rho, L, n) :
     pn = np.zeros((L, L), dtype=np.complex128)

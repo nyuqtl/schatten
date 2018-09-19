@@ -2,9 +2,7 @@ import numpy as np
 import qutip as qp
 
 from simanneal import Annealer
-from tools import instanceX
-
-from testing import normSchattenP, wrapperBiB, C2b
+from testing import normSchattenP, wrapperBiB, C2b, instanceX
 
 def testKets(kets) :
     for ket in kets :

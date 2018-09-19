@@ -2,8 +2,7 @@ import qutip as qp
 import numpy as np
 
 from tqdm import tqdm
-from testing import C2b, wrapperBiB, wrapperIdentity, normLP, normSchattenP
-from tools import instanceX
+from testing import C2b, wrapperBiB, wrapperIdentity, normLP, normSchattenP, instanceX
 
 total = 0
 all = 0
