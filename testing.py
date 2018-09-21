@@ -29,7 +29,7 @@ def wrapperBiB(rho, L) :
                     dm[l1, l2] = np.imag(M[l1, l2])
         return np.matrix(dm)
     B = Bn(rho, L)
-    return B + 1j*B.getH()
+    return np.exp(-1j*np.pi/4.)*B + np.exp(1j*np.pi/4.)*B.getH()
 
 def wrapperIdentity(rho, L) :
     return rho
