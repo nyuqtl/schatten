@@ -1,6 +1,33 @@
 import numpy as np
 import qutip as qp
 
+# L is dimension of density matrix
+# N is number of measurements
+
+# measurements can be represented by L kets of size N
+# (N outcomes)
+
+def testKet(ket) :
+    s = 0.
+    orth = True
+    for k in range(len(ket)) :
+        s += np.power(np.abs(ket[k]), 2.)
+        for k2 in range(k, len(ket)) :
+            if not np.isclose([np.conj(ket[k]*ket[k2])], [0.])[0] :
+                orth = False
+    if not np.isclose([s], [1.])[0] :
+        return False
+    return True
+
+def testInstance(x, L, N) :
+    valid = True
+    for l in range(0, L) :
+        v = testKet(x[l,:])
+        if not v :
+            valid = False
+    return valid
+
+# creates a set of L random measurements with N possible outcomes
 def instanceX(L, N) :
     x = np.zeros((L, N), dtype=np.complex128)
     # create X

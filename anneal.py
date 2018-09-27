@@ -2,16 +2,7 @@ import numpy as np
 import qutip as qp
 
 from simanneal import Annealer
-from testing import normSchattenP, wrapperBiB, C2b, instanceX
-
-def testKets(kets) :
-    for ket in kets :
-        s = 0.
-        for k in ket :
-            s += np.power(np.abs(k), 2.)
-        if not np.isclose([s], [1.])[0] :
-            return False
-    return True
+from testing import normSchattenP, wrapperBiB, C2b, instanceX, testInstance
 
 def rotate2D(z, a) :
     x = np.real(z)
@@ -33,19 +24,25 @@ def amplitude(inp, coeff) :
     return inp
 
 class OptimizeNorm(Annealer):
-    def __init__(self, state, L, N, a, ma):
+    def __init__(self, state, L, N, a, ma, testInstance=False):
         self.L = L
         self.N = N
         self.a = a
         self.ma = ma
+        self.testInstance = testInstance
         super(OptimizeNorm, self).__init__(state)  # important!
     def move(self):
-        """Randomly change one of kets"""
+        """Randomly change one of measurements"""
         x, dm = self.state
         l = np.random.randint(0, self.L)
         n = np.random.randint(0, self.N)
-        x[l,:] = phase(x[l,:], self.a)
-        x[l,:] = amplitude(x[l,:], self.ma)
+        a = np.random.uniform(1e-8, self.a)
+        ma = np.random.uniform(1e-8, self.ma)
+        x[l,:] = phase(x[l,:], a)
+        x[l,:] = amplitude(x[l,:], ma)
+        if self.testInstance :
+            if not testInstance(x, self.L, self.N) :
+                raise ValueError('Invalid measurement kets.')
         #dm = np.matrix(qp.rand_dm(self.L).full())
     def energy(self):
         """Calculates the difference between RHS and LHS of C2(b)"""
@@ -57,13 +54,19 @@ class OptimizeNorm(Annealer):
 L = 4
 N = 7
 
+# L is dimension of density matrix
+# N is number of measurements
+
+# measurements can be represented by L kets of size N
+# (N outcomes)
+
 # get some random density matrix
 dm = np.matrix(qp.rand_dm(L).full())
 
 # get set of random kets that will be used for measurement
 x = instanceX(L, N)
 
-print 'random sampling for density matrix\n'
+print 'random sampling for density matrix for which C2b vanishes\n'
 _, lhs, rhs = C2b(dm, x, L, N, 1., normSchattenP, wrapperBiB)
 mini = rhs - lhs
 for i in range(0, 10000) :
@@ -80,7 +83,7 @@ for i in range(0, 10000) :
 
 print 'beginning simulated annealing to find measurement violating C2(b) as local optimum\n'
 initial_state = tuple([x, dm])
-opt = OptimizeNorm(initial_state, L, N, .5*np.pi, .5)
+opt = OptimizeNorm(initial_state, L, N, .5*np.pi, .5, testInstance=False)
 opt.Tmax = 200000.0
 final_state, difference = opt.anneal()
 
